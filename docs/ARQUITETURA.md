@@ -85,6 +85,6 @@ ao stack pedido e está registada para decisão do responsável técnico.
 
 - Hierarquia de headings, `aria-label` em tabelas e gráficos, `aria-current` na navegação,
   foco visível, contraste sobre `#F5F8FC`/`#081522`.
-- Cena 3D carregada dinamicamente (`ssr: false`), DPR limitado a 1.75, sombras suaves (1024px) só na luz principal, instancing para paletes e caixas de racking e
+- Cena 3D carregada dinamicamente (`ssr: false`), DPR limitado a 1.75, sombras suaves (1024px) só na luz principal, instancing para paletes e caixas de racking. Modelos GLB licenciados são drop-in: se existirem em `public/models/` substituem os fallbacks processuais (ver `public/models/README.md` para o estado de licenciamento) e
   racking; fallback SVG quando WebGL ou `prefers-reduced-motion` impedem a renderização.
 - Gráficos e mapas têm alternativa textual (tabela/lista) — nenhum dado depende de canvas.

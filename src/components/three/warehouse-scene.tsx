@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
+import { OptionalModel, modelUrl, useModelAvailability } from "./optional-model";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import * as THREE from "three";
 
@@ -216,6 +217,8 @@ function FloorMarkings() {
 }
 
 function Building({ mode }: { mode: ViewMode }) {
+  const hasExteriorModel = useModelAvailability(modelUrl("logisticsCenter")) === true;
+  const architectural = mode === "architectural";
   const walls: { position: [number, number, number]; size: [number, number, number] }[] = [
     { position: [0, WALL_HEIGHT / 2, -FLOOR.depth / 2], size: [FLOOR.width, WALL_HEIGHT, 0.4] },
     { position: [0, WALL_HEIGHT / 2, FLOOR.depth / 2], size: [FLOOR.width, WALL_HEIGHT, 0.4] },
@@ -229,26 +232,18 @@ function Building({ mode }: { mode: ViewMode }) {
         <mesh key={index} position={wall.position}>
           <boxGeometry args={wall.size} />
           <meshStandardMaterial
-            color={mode === "architectural" ? "#1b3145" : "#14293a"}
+            color={architectural ? "#c3cedd" : "#14293a"}
             transparent
-            opacity={mode === "architectural" ? 0.85 : 0.16}
+            opacity={architectural ? (hasExteriorModel ? 0 : 0.94) : 0.16}
             roughness={0.8}
           />
         </mesh>
       ))}
-      {mode === "architectural" ? (
-        <group>
-          <mesh position={[0, WALL_HEIGHT + 0.2, 0]}>
-            <boxGeometry args={[FLOOR.width + 1, 0.35, FLOOR.depth + 1]} />
-            <meshStandardMaterial color="#1f3a51" transparent opacity={0.55} roughness={0.9} />
-          </mesh>
-          {[-10, 0, 10].map((z) => (
-            <mesh key={z} position={[0, WALL_HEIGHT + 0.42, z]}>
-              <boxGeometry args={[FLOOR.width * 0.72, 0.08, 1.7]} />
-              <meshStandardMaterial color="#7fb8e0" transparent opacity={0.5} emissive="#3d6a8c" emissiveIntensity={0.35} />
-            </mesh>
-          ))}
-        </group>
+      {architectural ? (
+        // Licensed GLB drops in when present in public/models/; otherwise the
+        // procedural exterior kit (inspired by — not copied from — the
+        // reference "Logistics Center" by mednik13) keeps the exterior view.
+        <OptionalModel url={modelUrl("logisticsCenter")} fallback={<ArchitecturalShell />} />
       ) : null}
       {/* structural columns: part of the building, never inside aisles */}
       {[-24, -12, 0, 12, 24].map((x) =>
@@ -259,6 +254,83 @@ function Building({ mode }: { mode: ViewMode }) {
           </mesh>
         )),
       )}
+    </group>
+  );
+}
+
+/** Procedural exterior for the architectural view: flat roof, parapet caps,
+ * rooftop HVAC units, dock canopy with posts, glazed office pod and signage
+ * band. Form language echoing the reference, original geometry. */
+function ArchitecturalShell() {
+  const canopyXs = Array.from({ length: 9 }, (_, index) => -26 + index * 6.5);
+  return (
+    <group>
+      <mesh position={[0, WALL_HEIGHT + 0.2, 0]}>
+        <boxGeometry args={[FLOOR.width + 1, 0.35, FLOOR.depth + 1]} />
+        <meshStandardMaterial color="#aab8c8" roughness={0.9} />
+      </mesh>
+      {[-10, 0, 10].map((z) => (
+        <mesh key={z} position={[0, WALL_HEIGHT + 0.42, z]}>
+          <boxGeometry args={[FLOOR.width * 0.72, 0.08, 1.7]} />
+          <meshStandardMaterial color="#7fb8e0" transparent opacity={0.5} emissive="#3d6a8c" emissiveIntensity={0.35} />
+        </mesh>
+      ))}
+      {/* parapet caps */}
+      {[
+        { position: [0, WALL_HEIGHT + 0.45, -FLOOR.depth / 2] as [number, number, number], dims: [FLOOR.width + 0.9, 0.5, 0.55] as [number, number, number] },
+        { position: [0, WALL_HEIGHT + 0.45, FLOOR.depth / 2] as [number, number, number], dims: [FLOOR.width + 0.9, 0.5, 0.55] as [number, number, number] },
+        { position: [-FLOOR.width / 2, WALL_HEIGHT + 0.45, 0] as [number, number, number], dims: [0.55, 0.5, FLOOR.depth + 0.9] as [number, number, number] },
+        { position: [FLOOR.width / 2, WALL_HEIGHT + 0.45, 0] as [number, number, number], dims: [0.55, 0.5, FLOOR.depth + 0.9] as [number, number, number] },
+      ].map((cap, index) => (
+        <mesh key={index} position={cap.position}>
+          <boxGeometry args={cap.dims} />
+          <meshStandardMaterial color="#93a5ba" roughness={0.7} metalness={0.2} />
+        </mesh>
+      ))}
+      {/* rooftop HVAC units */}
+      {[-18, 0, 18].map((x) => (
+        <group key={x} position={[x, WALL_HEIGHT + 0.4, -6]}>
+          <mesh position={[0, 0.55, 0]} castShadow>
+            <boxGeometry args={[3, 1.1, 2.2]} />
+            <meshStandardMaterial color="#8fa2b5" roughness={0.8} metalness={0.25} />
+          </mesh>
+          <mesh position={[0, 1.15, 0]}>
+            <cylinderGeometry args={[0.62, 0.62, 0.18, 20]} />
+            <meshStandardMaterial color="#5b7186" roughness={0.6} metalness={0.3} />
+          </mesh>
+        </group>
+      ))}
+      {/* dock canopy over the north dock row, on slim posts */}
+      <mesh position={[0, 4.9, -FLOOR.depth / 2 - 1.1]}>
+        <boxGeometry args={[54, 0.22, 2.6]} />
+        <meshStandardMaterial color="#31445a" roughness={0.6} metalness={0.35} />
+      </mesh>
+      {canopyXs.map((x) => (
+        <mesh key={x} position={[x, 2.4, -FLOOR.depth / 2 - 2.1]}>
+          <cylinderGeometry args={[0.09, 0.09, 4.8, 8]} />
+          <meshStandardMaterial color="#46617a" roughness={0.7} />
+        </mesh>
+      ))}
+      {/* glazed office pod at the front corner */}
+      <group position={[24, 0, FLOOR.depth / 2 + 2.4]}>
+        <mesh position={[0, 1.7, 0]} castShadow>
+          <boxGeometry args={[7.5, 3.4, 4.2]} />
+          <meshStandardMaterial color="#d7dfe9" roughness={0.85} />
+        </mesh>
+        <mesh position={[0, 2.3, 2.12]}>
+          <boxGeometry args={[6.9, 0.9, 0.06]} />
+          <meshStandardMaterial color="#7dd3fc" transparent opacity={0.55} emissive="#4d7a9c" emissiveIntensity={0.35} />
+        </mesh>
+        <mesh position={[0, 3.55, 0]}>
+          <boxGeometry args={[7.9, 0.3, 4.6]} />
+          <meshStandardMaterial color="#93a5ba" roughness={0.7} />
+        </mesh>
+      </group>
+      {/* brand signage band on the front wall */}
+      <mesh position={[0, 5.1, FLOOR.depth / 2 + 0.24]}>
+        <boxGeometry args={[16, 1, 0.16]} />
+        <meshStandardMaterial color="#b8f36a" emissive="#4d7a1c" emissiveIntensity={0.5} roughness={0.5} />
+      </mesh>
     </group>
   );
 }
@@ -386,7 +458,7 @@ function ParkedTrucks() {
     <group>
       {[-20, 12].map((x, index) => (
         <group key={x} position={[x, 0, -FLOOR.depth / 2 - 4.5]} rotation={[0, index === 0 ? 0 : Math.PI, 0]}>
-          <TruckBody cab={index === 0 ? "#b8f36a" : "#e8b04a"} />
+          <OptionalModel url={modelUrl("trucks")} fallback={<TruckBody cab={index === 0 ? "#b8f36a" : "#e8b04a"} />} />
         </group>
       ))}
     </group>
@@ -407,11 +479,11 @@ function Traffic() {
   return (
     <group>
       <group ref={east} position={[0, 0, 23.3]} rotation={[0, Math.PI / 2, 0]}>
-        <TruckBody />
+        <OptionalModel url={modelUrl("trucks")} fallback={<TruckBody />} />
         <PulsingBeacon position={[0, 2.9, 4.1]} color="#fbbf24" speed={7} size={0.11} />
       </group>
       <group ref={west} position={[0, 0, 28.6]} rotation={[0, -Math.PI / 2, 0]}>
-        <TruckBody cab="#7dd3fc" trailer="#d3dce4" />
+        <OptionalModel url={modelUrl("trucks")} fallback={<TruckBody cab="#7dd3fc" trailer="#d3dce4" />} />
       </group>
     </group>
   );

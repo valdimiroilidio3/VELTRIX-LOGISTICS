@@ -3,6 +3,7 @@
 import { useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Sparkles } from "@react-three/drei";
+import { OptionalModel, modelUrl } from "./optional-model";
 import * as THREE from "three";
 
 /** Brand palette aligned with tailwind tokens. */
@@ -148,7 +149,7 @@ function TruckLoop({ animate }: { animate: boolean }) {
         <meshBasicMaterial color={SLATE} transparent opacity={0.45} />
       </mesh>
       <group ref={truck} position={[ROAD, 0, 0]}>
-        <MiniTruck animate={animate} />
+        <OptionalModel url={modelUrl("trucks")} fallback={<MiniTruck animate={animate} />} scale={0.6} />
       </group>
     </group>
   );
