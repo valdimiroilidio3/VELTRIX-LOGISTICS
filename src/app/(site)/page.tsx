@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { TrackForm } from "@/components/site/track-form";
 import { FacilityViewer } from "@/components/three/facility-viewer";
+import { HeroVisual } from "@/components/three/hero-visual";
 import { Badge, ButtonLink } from "@/components/ui";
 import { ensureDatabase } from "@/lib/db";
 import { getFacilityLayout } from "@/lib/domain/warehouse";
@@ -157,10 +158,10 @@ export default async function HomePage() {
           </div>
 
           <div className="animate-fade-up lg:pl-4">
-            <FacilityViewer zones={zones} height={400} isDemo />
+            <HeroVisual height={440} />
             <p className="mt-2 px-1 text-[11px] leading-relaxed text-muted/80">
-              Representação 3D do centro logístico gerada a partir das zonas de armazenagem registadas. Em ausência de
-              dados operacionais, a demonstração é identificada como tal.
+              Animação decorativa de marca. O modelo 3D do centro logístico — gerado a partir das zonas de armazenagem
+              registadas — está na secção Plataforma, mais abaixo.
             </p>
           </div>
         </div>
@@ -279,6 +280,14 @@ export default async function HomePage() {
               );
             })}
           </div>
+        </div>
+
+        <div className="mt-10">
+          <FacilityViewer zones={zones} height={460} isDemo />
+          <p className="mt-2 px-1 text-[11px] leading-relaxed text-muted/80">
+            Representação 3D do centro logístico gerada a partir das zonas de armazenagem registadas. Em ausência de
+            dados operacionais, a demonstração é identificada como tal.
+          </p>
         </div>
       </section>
 

@@ -23,6 +23,7 @@ faturação interna, notificações em fila, auditoria e observabilidade.
 | Frota e motoristas | Funcional (sem telemetria) | `src/app/app/fleet` |
 | Armazém, inventário e zonas | Funcional (ocupação manual auditada) | `src/lib/domain/warehouse.ts` |
 | Centro logístico 3D | Funcional, marcado como esquemático | `src/components/three` |
+| Hero 3D animado (landing) | Decorativo, sem dados; respeita `prefers-reduced-motion` | `src/components/three/hero-*` |
 | Orçamentos com tabela de preços em BD | Funcional (valores provisórios) | `src/lib/domain/pricing.ts` |
 | Faturação interna + pagamentos manuais | Funcional, **não certificado fiscalmente** | `src/lib/domain/commercial.ts` |
 | Fila de notificações (outbox) | Funcional; envio real só com Resend | `src/lib/notifications.ts` |

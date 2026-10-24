@@ -23,7 +23,7 @@ Documento deliberadamente conservador: tudo o que não foi validado em ambiente 
 | Faturação | Emissão interna, IVA, pagamentos manuais, estados | Certificação fiscal (Portaria 363/2010), SAF-T, séries por estabelecimento |
 | Notificações | Outbox, backoff, templates, cron | SMS/WhatsApp com fornecedor, preferências por cliente, modelos aprovados |
 | Relatórios | Métricas com definição + séries diárias | Exportações XLSX, agendamento de relatórios, comparação de períodos |
-| 3D | Cena R3F com zonas derivadas da BD, filtros, seleção, sombras e animações decorativas | Plantas importáveis (IFC/CAD), colisão, localização em tempo real |
+| 3D | Cena R3F com zonas derivadas da BD, filtros, seleção, sombras e animações decorativas; hero de landing com animação de marca (sem dados) | Plantas importáveis (IFC/CAD), colisão, localização em tempo real |
 | Mapas | Componente MapLibre + fallback SVG | Estilo/tiles contratados, geocoding, clustering de paragens |
 | RLS | Políticas escritas e forçadas | Aplicação a uma instância Supabase e testes com JWT reais |
 | Cron de faturas vencidas | Estado `overdue` derivado na leitura | Job diário que notifica e audita a transição |
