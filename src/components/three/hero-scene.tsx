@@ -2,8 +2,9 @@
 
 import { useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Sparkles } from "@react-three/drei";
+import { Environment, Lightformer, Sparkles } from "@react-three/drei";
 import { OptionalModel, modelUrl } from "./optional-model";
+import { ProcTruck } from "./proc-truck";
 import * as THREE from "three";
 
 /** Brand palette aligned with tailwind tokens. */
@@ -33,6 +34,11 @@ export function HeroScene({ animate }: HeroSceneProps) {
       <ambientLight intensity={0.4} color="#b9d4ea" />
       <directionalLight position={[6, 10, 4]} intensity={1.35} color="#f2fbff" />
       <directionalLight position={[-6, 4, -5]} intensity={0.35} color={SKY} />
+      <Environment frames={1} resolution={64}>
+        <Lightformer intensity={1.2} color="#cfe6ff" position={[0, 6, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[10, 10, 1]} />
+        <Lightformer intensity={0.6} color="#7dd3fc" position={[-8, 3, -6]} rotation={[0, Math.PI / 2, 0]} scale={[7, 2.5, 1]} />
+        <Lightformer intensity={0.45} color="#dff3b0" position={[8, 2.5, 5]} rotation={[0, -Math.PI / 2, 0]} scale={[6, 2.5, 1]} />
+      </Environment>
       <SceneContents animate={animate} />
     </Canvas>
   );
@@ -149,57 +155,15 @@ function TruckLoop({ animate }: { animate: boolean }) {
         <meshBasicMaterial color={SLATE} transparent opacity={0.45} />
       </mesh>
       <group ref={truck} position={[ROAD, 0, 0]}>
-        <OptionalModel url={modelUrl("trucks")} fallback={<MiniTruck animate={animate} />} scale={0.6} />
-      </group>
-    </group>
-  );
-}
-
-function MiniTruck({ animate }: { animate: boolean }) {
-  const wheels = useRef<THREE.Group>(null);
-
-  useFrame((state, delta) => {
-    if (!animate || !wheels.current) return;
-    wheels.current.children.forEach((wheel) => {
-      wheel.rotation.x += delta * 6;
-    });
-  });
-
-  return (
-    <group scale={0.6}>
-      <mesh position={[0, 0.75, -0.25]}>
-        <boxGeometry args={[1.1, 0.95, 2.1]} />
-        <meshStandardMaterial color="#e6edf4" roughness={0.5} metalness={0.1} />
-      </mesh>
-      <mesh position={[0, 0.62, 1.15]}>
-        <boxGeometry args={[1.05, 0.72, 0.75]} />
-        <meshStandardMaterial color={ACCENT} roughness={0.45} metalness={0.15} />
-      </mesh>
-      <mesh position={[0, 0.78, 1.53]}>
-        <boxGeometry args={[0.9, 0.3, 0.06]} />
-        <meshStandardMaterial color="#0d1c28" roughness={0.3} metalness={0.4} />
-      </mesh>
-      {/* headlight and tail-light strips */}
-      <mesh position={[0, 0.36, 1.55]}>
-        <boxGeometry args={[0.85, 0.09, 0.05]} />
-        <meshStandardMaterial color="#fef9c3" emissive="#fde68a" emissiveIntensity={1.4} />
-      </mesh>
-      <mesh position={[0, 0.45, -1.32]}>
-        <boxGeometry args={[0.85, 0.09, 0.05]} />
-        <meshStandardMaterial color="#f87171" emissive="#f87171" emissiveIntensity={1.1} />
-      </mesh>
-      <group ref={wheels}>
-        {[
-          [-0.58, 1.05],
-          [0.58, 1.05],
-          [-0.58, -0.85],
-          [0.58, -0.85],
-        ].map(([wheelX, wheelZ]) => (
-          <mesh key={`${wheelX}-${wheelZ}`} position={[wheelX ?? 0, 0.24, wheelZ ?? 0]} rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.24, 0.24, 0.16, 12]} />
-            <meshStandardMaterial color="#0b1620" roughness={0.9} />
-          </mesh>
-        ))}
+        <OptionalModel
+          url={modelUrl("trucks")}
+          fallback={
+            <group scale={0.42}>
+              <ProcTruck lite animate={animate} />
+            </group>
+          }
+          scale={0.6}
+        />
       </group>
     </group>
   );

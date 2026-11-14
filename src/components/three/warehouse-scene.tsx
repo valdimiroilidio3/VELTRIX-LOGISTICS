@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { Environment, Lightformer, OrbitControls } from "@react-three/drei";
 import { OptionalModel, modelUrl, useModelAvailability } from "./optional-model";
+import { ProcTruck } from "./proc-truck";
+import { asphaltTexture, cachedTexture, concreteTexture, corrugatedTexture } from "./textures";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import * as THREE from "three";
 
@@ -126,6 +128,11 @@ export function WarehouseScene({
         shadow-bias={-0.00035}
       />
       <directionalLight position={[-30, 18, -22]} intensity={0.45} color="#7dd3fc" />
+      <Environment frames={1} resolution={64}>
+        <Lightformer intensity={1.3} color="#cfe6ff" position={[0, 8, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[12, 12, 1]} />
+        <Lightformer intensity={0.6} color="#7dd3fc" position={[-9, 3, -7]} rotation={[0, Math.PI / 2, 0]} scale={[9, 3, 1]} />
+        <Lightformer intensity={0.5} color="#dff3b0" position={[9, 3, 6]} rotation={[0, -Math.PI / 2, 0]} scale={[8, 3, 1]} />
+      </Environment>
 
       <Ground />
       <FloorMarkings />
@@ -169,6 +176,7 @@ export function WarehouseScene({
 }
 
 function Ground() {
+  const concrete = cachedTexture("apron-concrete", () => concreteTexture([6, 1]));
   return (
     <>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]} receiveShadow>
@@ -183,7 +191,7 @@ function Ground() {
       {/* concrete apron around the building */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, -FLOOR.depth / 2 - 5.5]} receiveShadow>
         <planeGeometry args={[FLOOR.width + 6, 11]} />
-        <meshStandardMaterial color="#0e2030" roughness={1} />
+        <meshStandardMaterial map={concrete} color="#9fb3c4" roughness={1} />
       </mesh>
     </>
   );
@@ -218,6 +226,7 @@ function FloorMarkings() {
 
 function Building({ mode }: { mode: ViewMode }) {
   const hasExteriorModel = useModelAvailability(modelUrl("logisticsCenter")) === true;
+  const corrugated = cachedTexture("wall-corrugated", () => corrugatedTexture("#cfd9e4", [24, 1]));
   const architectural = mode === "architectural";
   const walls: { position: [number, number, number]; size: [number, number, number] }[] = [
     { position: [0, WALL_HEIGHT / 2, -FLOOR.depth / 2], size: [FLOOR.width, WALL_HEIGHT, 0.4] },
@@ -232,7 +241,9 @@ function Building({ mode }: { mode: ViewMode }) {
         <mesh key={index} position={wall.position}>
           <boxGeometry args={wall.size} />
           <meshStandardMaterial
-            color={architectural ? "#c3cedd" : "#14293a"}
+            key={architectural ? "arch" : "op"}
+            color={architectural ? "#ffffff" : "#14293a"}
+            map={architectural ? corrugated : null}
             transparent
             opacity={architectural ? (hasExteriorModel ? 0 : 0.94) : 0.16}
             roughness={0.8}
@@ -336,11 +347,13 @@ function ArchitecturalShell() {
 }
 
 function Roads() {
+  const asphalt = cachedTexture("road-asphalt", () => asphaltTexture([16, 1]));
+  const asphaltSide = cachedTexture("road-asphalt-side", () => asphaltTexture([1, 4]));
   return (
     <group>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 26]} receiveShadow>
         <planeGeometry args={[160, 10]} />
-        <meshStandardMaterial color="#132a3d" roughness={1} />
+        <meshStandardMaterial map={asphalt} color="#5c7186" roughness={1} />
       </mesh>
       {Array.from({ length: 15 }).map((_, index) => (
         <mesh key={index} rotation={[-Math.PI / 2, 0, 0]} position={[-67 + index * 9.5, 0.02, 26]}>
@@ -350,7 +363,7 @@ function Roads() {
       ))}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-38, 0.01, 16]}>
         <planeGeometry args={[7, 22]} />
-        <meshStandardMaterial color="#132a3d" roughness={1} />
+        <meshStandardMaterial map={asphaltSide} color="#5c7186" roughness={1} />
       </mesh>
     </group>
   );
@@ -425,40 +438,13 @@ function PulsingBeacon({
   );
 }
 
-function TruckBody({ cab = "#b8f36a", trailer = "#e6edf4" }: { cab?: string; trailer?: string }) {
-  return (
-    <group>
-      <mesh position={[0, 1.9, 0]} castShadow>
-        <boxGeometry args={[3.2, 2.9, 6.4]} />
-        <meshStandardMaterial color={trailer} roughness={0.5} metalness={0.1} />
-      </mesh>
-      <mesh position={[0, 1.5, 4.1]} castShadow>
-        <boxGeometry args={[3, 2.3, 2]} />
-        <meshStandardMaterial color={cab} roughness={0.45} metalness={0.15} />
-      </mesh>
-      <mesh position={[0, 2.05, 5.05]}>
-        <boxGeometry args={[2.6, 0.8, 0.1]} />
-        <meshStandardMaterial color="#0d1c28" roughness={0.3} metalness={0.4} />
-      </mesh>
-      {[-1.15, 1.15].map((wheelX) =>
-        [-3.2, 3.4].map((wheelZ) => (
-          <mesh key={`${wheelX}-${wheelZ}`} position={[wheelX, 0.5, wheelZ]} rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.5, 0.5, 0.34, 14]} />
-            <meshStandardMaterial color="#0b1620" />
-          </mesh>
-        )),
-      )}
-    </group>
-  );
-}
-
 /** Trucks waiting at the receiving and dispatch docks. */
 function ParkedTrucks() {
   return (
     <group>
       {[-20, 12].map((x, index) => (
         <group key={x} position={[x, 0, -FLOOR.depth / 2 - 4.5]} rotation={[0, index === 0 ? 0 : Math.PI, 0]}>
-          <OptionalModel url={modelUrl("trucks")} fallback={<TruckBody cab={index === 0 ? "#b8f36a" : "#e8b04a"} />} />
+          <OptionalModel url={modelUrl("trucks")} fallback={<ProcTruck accent={index === 0 ? "#b8f36a" : "#e8b04a"} animate={false} />} scale={0.9} />
         </group>
       ))}
     </group>
@@ -479,11 +465,11 @@ function Traffic() {
   return (
     <group>
       <group ref={east} position={[0, 0, 23.3]} rotation={[0, Math.PI / 2, 0]}>
-        <OptionalModel url={modelUrl("trucks")} fallback={<TruckBody />} />
+        <OptionalModel url={modelUrl("trucks")} fallback={<ProcTruck />} scale={0.9} />
         <PulsingBeacon position={[0, 2.9, 4.1]} color="#fbbf24" speed={7} size={0.11} />
       </group>
       <group ref={west} position={[0, 0, 28.6]} rotation={[0, -Math.PI / 2, 0]}>
-        <OptionalModel url={modelUrl("trucks")} fallback={<TruckBody cab="#7dd3fc" trailer="#d3dce4" />} />
+        <OptionalModel url={modelUrl("trucks")} fallback={<ProcTruck accent="#7dd3fc" trailer="#d3dce4" />} scale={0.9} />
       </group>
     </group>
   );
